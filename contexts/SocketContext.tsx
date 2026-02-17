@@ -9,13 +9,14 @@ import React, {
 } from "react";
 import type { Socket } from "socket.io-client";
 import { useQueryClient } from "@tanstack/react-query";
-import { connectSocket, getSocket } from "@/services/socket";
+import { connectSocket, getSocket, disconnectSocket } from "@/services/socket";
 import { groupKeys } from "@/hooks/useGroups";
 
 interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;
   connect: () => void;
+  disconnect: () => void;
   sendGroupMessage: (groupId: string, content: string) => void;
   groupTyping: (groupId: string) => void;
   groupStopTyping: (groupId: string) => void;
@@ -45,6 +46,13 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const newSocket = connectSocket(token);
     setSocket(newSocket);
+  }, []);
+
+  // Disconnect socket and reset state
+  const disconnect = useCallback(() => {
+    disconnectSocket();
+    setSocket(null);
+    setIsConnected(false);
   }, []);
 
   // Try to connect on mount (works if token already exists)
@@ -160,6 +168,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
         socket,
         isConnected,
         connect,
+        disconnect,
         sendGroupMessage,
         groupTyping,
         groupStopTyping,

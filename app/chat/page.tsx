@@ -4,6 +4,7 @@ import { useSendMessage } from "@/hooks/useSendMessage";
 import { getChatHistory } from "@/services/chat.service";
 import { getUsers } from "@/services/user.service";
 import { getUserIdFromToken } from "@/services/auth.utils";
+import { logout } from "@/services/auth.service";
 import { useSocket } from "@/contexts/SocketContext";
 import { useUserGroups } from "@/hooks/useGroups";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,7 +30,7 @@ export default function ChatPage() {
   const selectedUserRef = useRef<any>(null);
 
   // Socket from context (single connection)
-  const { socket, connect } = useSocket();
+  const { socket, connect, disconnect } = useSocket();
 
   // Ensure socket is created (handles post-login navigation)
   useEffect(() => {
@@ -64,10 +65,16 @@ export default function ChatPage() {
       const data = await getUsers();
       return data.map((u: any) => ({
         ...u,
-        isOnline: false,
+        isOnline: (u as any).isOnline ?? false,
       }));
     },
   });
+
+  // Request online users list once socket is connected and users are loaded
+  useEffect(() => {
+    if (!socket || users.length === 0) return;
+    socket.emit("get_online_users");
+  }, [socket, users.length]);
 
   // Fetch chat messages (DM)
   const { data: messages = [] } = useQuery({
@@ -207,6 +214,15 @@ export default function ChatPage() {
     };
   }, [socket, queryClient]);
 
+  // Keep selectedUser in sync with latest online status from users list
+  useEffect(() => {
+    if (!selectedUser) return;
+    const updated = users.find((u: any) => u.id === selectedUser.id);
+    if (updated && updated.isOnline !== selectedUser.isOnline) {
+      setSelectedUser(updated);
+    }
+  }, [users, selectedUser]);
+
   // Active DM chat tracking
   useEffect(() => {
     if (!selectedUser || !socket) return;
@@ -232,6 +248,11 @@ export default function ChatPage() {
     socket?.emit("stop_typing", { to: selectedUser.id });
     sendMessageMutation.mutate(input);
     setInput("");
+  };
+
+  const handleLogout = () => {
+    disconnect();
+    logout();
   };
 
   const formatTime = (date: string) => {
@@ -267,29 +288,53 @@ export default function ChatPage() {
           </span>
         </div>
 
-        {/* Right side: current chat info */}
-        {chatMode === "dm" && selectedUser && (
-          <div className="flex items-center gap-2">
-            <span
-              className={`w-2 h-2 rounded-full ${selectedUser.isOnline ? "bg-emerald-400" : "bg-zinc-600"}`}
-            />
-            <span className="text-sm font-medium text-zinc-300">
-              {selectedUser.username}
-            </span>
-            <span className="text-xs text-zinc-600">
-              {selectedUser.isOnline ? "active" : "offline"}
-            </span>
-          </div>
-        )}
-        {chatMode === "group" && selectedGroupId && (
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-rose-400" />
-            <span className="text-sm font-medium text-zinc-300">
-              {(groups as any[]).find((g: any) => g.id === selectedGroupId)
-                ?.name || "Group"}
-            </span>
-          </div>
-        )}
+        {/* Right side: current chat info + logout */}
+        <div className="flex items-center gap-3">
+          {chatMode === "dm" && selectedUser && (
+            <div className="flex items-center gap-2">
+              <span
+                className={`w-2 h-2 rounded-full ${selectedUser.isOnline ? "bg-emerald-400" : "bg-zinc-600"}`}
+              />
+              <span className="text-sm font-medium text-zinc-300">
+                {selectedUser.username}
+              </span>
+              <span className="text-xs text-zinc-600">
+                {selectedUser.isOnline ? "active" : "offline"}
+              </span>
+            </div>
+          )}
+          {chatMode === "group" && selectedGroupId && (
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-rose-400" />
+              <span className="text-sm font-medium text-zinc-300">
+                {(groups as any[]).find((g: any) => g.id === selectedGroupId)
+                  ?.name || "Group"}
+              </span>
+            </div>
+          )}
+
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-500 hover:text-rose-400 hover:bg-white/5 border border-white/6 transition-all"
+            title="Logout"
+          >
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              />
+            </svg>
+            Logout
+          </button>
+        </div>
       </div>
 
       {/* Tab Bar */}
