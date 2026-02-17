@@ -25,6 +25,7 @@ interface GroupMessage {
   groupId: string;
   senderId: string;
   content: string;
+  isSystem?: boolean;
   createdAt: string;
   sender: User;
 }

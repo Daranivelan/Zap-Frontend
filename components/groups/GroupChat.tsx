@@ -224,6 +224,7 @@ const GroupChat: React.FC<GroupChatProps> = ({ groupId, onGroupLeft }) => {
           ) : (
             sortedMessages.map((msg: any, index: number) => {
               const isMe = msg.senderId === currentUser;
+              const isSystem = msg.isSystem === true;
               const showTime =
                 index === 0 ||
                 new Date(msg.createdAt).getTime() -
@@ -231,6 +232,7 @@ const GroupChat: React.FC<GroupChatProps> = ({ groupId, onGroupLeft }) => {
                   300000;
               const showSender =
                 !isMe &&
+                !isSystem &&
                 (index === 0 ||
                   sortedMessages[index - 1]?.senderId !== msg.senderId);
 
@@ -245,37 +247,45 @@ const GroupChat: React.FC<GroupChatProps> = ({ groupId, onGroupLeft }) => {
                       <div className="flex-1 border-t border-white/4" />
                     </div>
                   )}
-                  <div
-                    className={`flex ${isMe ? "justify-end" : "justify-start"} ${msg.optimistic ? "opacity-50" : "opacity-100"} transition-opacity`}
-                  >
-                    <div className="max-w-[65%] group">
-                      {showSender && (
-                        <p className="text-[11px] text-rose-400/70 font-medium mb-1 px-1">
-                          {msg.sender?.username ||
-                            msg.senderUsername ||
-                            "Unknown"}
-                        </p>
-                      )}
-                      <div
-                        className={`px-4 py-2.5 rounded-lg border-l-2 ${
-                          isMe
-                            ? "bg-rose-500/8 border-l-rose-500 text-zinc-200"
-                            : "bg-white/3 border-l-zinc-700 text-zinc-300"
-                        }`}
-                      >
-                        <div className="text-sm leading-relaxed">
-                          {msg.content}
+                  {isSystem ? (
+                    <div className="flex justify-center my-2">
+                      <span className="text-[11px] text-zinc-500 bg-white/3 border border-white/6 px-3 py-1 rounded-full font-medium">
+                        {msg.content}
+                      </span>
+                    </div>
+                  ) : (
+                    <div
+                      className={`flex ${isMe ? "justify-end" : "justify-start"} ${msg.optimistic ? "opacity-50" : "opacity-100"} transition-opacity`}
+                    >
+                      <div className="max-w-[65%] group">
+                        {showSender && (
+                          <p className="text-[11px] text-rose-400/70 font-medium mb-1 px-1">
+                            {msg.sender?.username ||
+                              msg.senderUsername ||
+                              "Unknown"}
+                          </p>
+                        )}
+                        <div
+                          className={`px-4 py-2.5 rounded-lg border-l-2 ${
+                            isMe
+                              ? "bg-rose-500/8 border-l-rose-500 text-zinc-200"
+                              : "bg-white/3 border-l-zinc-700 text-zinc-300"
+                          }`}
+                        >
+                          <div className="text-sm leading-relaxed">
+                            {msg.content}
+                          </div>
+                        </div>
+                        <div
+                          className={`flex items-center gap-2 mt-1 px-1 ${isMe ? "justify-end" : "justify-start"}`}
+                        >
+                          <span className="text-[10px] text-zinc-700 font-mono opacity-0 group-hover:opacity-100 transition-opacity">
+                            {formatTime(msg.createdAt)}
+                          </span>
                         </div>
                       </div>
-                      <div
-                        className={`flex items-center gap-2 mt-1 px-1 ${isMe ? "justify-end" : "justify-start"}`}
-                      >
-                        <span className="text-[10px] text-zinc-700 font-mono opacity-0 group-hover:opacity-100 transition-opacity">
-                          {formatTime(msg.createdAt)}
-                        </span>
-                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               );
             })
