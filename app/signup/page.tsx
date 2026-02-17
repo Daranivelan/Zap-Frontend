@@ -1,26 +1,47 @@
 "use client";
 
-import { login } from "@/services/auth.service";
+import { signup, login } from "@/services/auth.service";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
 
-  const handleLogin = async () => {
+  const handleSignup = async () => {
     setError("");
+
+    if (!username || !password || !confirmPassword) {
+      setError("All fields are required");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords don't match");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
     setIsLoading(true);
     try {
+      await signup(username, password);
       const data = await login(username, password);
       sessionStorage.setItem("token", data.token);
       router.push("/chat");
-    } catch (err) {
-      setError("Invalid username or password");
+    } catch (err: any) {
+      setError(
+        err.response?.data?.message ||
+          "Signup failed. Username might be taken.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -71,9 +92,9 @@ export default function LoginPage() {
             <span className="text-lg font-bold text-zinc-100">Zap</span>
           </div>
           <h1 className="text-2xl font-bold text-zinc-100 mb-1">
-            Welcome back
+            Create your account
           </h1>
-          <p className="text-sm text-zinc-500">Sign in to your account</p>
+          <p className="text-sm text-zinc-500">Start chatting in seconds</p>
         </div>
 
         {/* Form */}
@@ -101,10 +122,10 @@ export default function LoginPage() {
             </label>
             <input
               type="text"
-              placeholder="enter your username"
+              placeholder="choose a username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+              onKeyDown={(e) => e.key === "Enter" && handleSignup()}
               className="glow-rose w-full bg-white/3 text-zinc-100 border border-white/6 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-rose-500/40 placeholder-zinc-700 transition-all"
             />
           </div>
@@ -115,17 +136,31 @@ export default function LoginPage() {
             </label>
             <input
               type="password"
-              placeholder="enter your password"
+              placeholder="min 6 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+              onKeyDown={(e) => e.key === "Enter" && handleSignup()}
+              className="glow-rose w-full bg-white/3 text-zinc-100 border border-white/6 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-rose-500/40 placeholder-zinc-700 transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5 uppercase tracking-wider">
+              Confirm Password
+            </label>
+            <input
+              type="password"
+              placeholder="confirm your password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSignup()}
               className="glow-rose w-full bg-white/3 text-zinc-100 border border-white/6 rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-rose-500/40 placeholder-zinc-700 transition-all"
             />
           </div>
 
           <button
-            onClick={handleLogin}
-            disabled={isLoading || !username || !password}
+            onClick={handleSignup}
+            disabled={isLoading || !username || !password || !confirmPassword}
             className="w-full bg-rose-500 hover:bg-rose-400 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg text-sm transition-all hover:scale-[1.01] active:scale-[0.99]"
           >
             {isLoading ? (
@@ -146,10 +181,10 @@ export default function LoginPage() {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   />
                 </svg>
-                Signing in...
+                Creating account...
               </span>
             ) : (
-              "Sign in"
+              "Create account"
             )}
           </button>
         </div>
@@ -162,12 +197,12 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-sm text-zinc-600">
-          Don&apos;t have an account?{" "}
+          Already have an account?{" "}
           <Link
-            href="/signup"
+            href="/login"
             className="text-rose-400 hover:text-rose-300 font-medium transition-colors"
           >
-            Create one
+            Sign in
           </Link>
         </p>
       </div>

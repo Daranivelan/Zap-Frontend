@@ -1,9 +1,58 @@
 @import "tailwindcss";
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 body {
   margin: 0;
+  background-color: #09090b;
+}
+
+/* Dot grid background pattern */
+.dot-grid {
+  background-image: radial-gradient(
+    circle,
+    rgba(244, 63, 94, 0.08) 1px,
+    transparent 1px
+  );
+  background-size: 32px 32px;
+}
+
+/* Glass panel effect */
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(244, 63, 94, 0.15);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(244, 63, 94, 0.3);
+}
+
+/* Hide scrollbar for contacts bar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Subtle rose glow for focused inputs */
+.glow-rose:focus {
+  box-shadow:
+    0 0 0 1px rgba(244, 63, 94, 0.3),
+    0 0 20px -5px rgba(244, 63, 94, 0.15);
 }
